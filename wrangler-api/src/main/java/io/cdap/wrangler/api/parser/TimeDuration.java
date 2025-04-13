@@ -1,25 +1,41 @@
 package io.cdap.wrangler.api.parser;
 
-public class TimeDuration extends Token {
-    private final long milliseconds;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonElement;
+
+public class TimeDuration implements Token {
+    private final long millis;
+    private final String value;
 
     public TimeDuration(String value) {
-        super(value);
-        this.milliseconds = parseMilliseconds(value);
+        this.value = value;
+        this.millis = parse(value);
     }
 
-    private long parseMilliseconds(String str) {
-        str = str.trim().toLowerCase();
-        double number = Double.parseDouble(str.replaceAll("[^0-9.]", ""));
-        if (str.endsWith("ms")) return (long)(number);
-        if (str.endsWith("s")) return (long)(number * 1000);
-        if (str.endsWith("m")) return (long)(number * 60 * 1000);
-        if (str.endsWith("h")) return (long)(number * 60 * 60 * 1000);
-        if (str.endsWith("d")) return (long)(number * 24 * 60 * 60 * 1000);
-        return (long) number; // Default to milliseconds
+    private long parse(String input) {
+        input = input.trim().toLowerCase();
+        if (input.endsWith("ms")) return (long)(Double.parseDouble(input.replace("ms", "")));
+        if (input.endsWith("s")) return (long)(Double.parseDouble(input.replace("s", "")) * 1000);
+        if (input.endsWith("m")) return (long)(Double.parseDouble(input.replace("m", "")) * 60 * 1000);
+        if (input.endsWith("h")) return (long)(Double.parseDouble(input.replace("h", "")) * 3600 * 1000);
+        throw new IllegalArgumentException("Invalid TimeDuration: " + input);
     }
 
     public long getMilliseconds() {
-        return milliseconds;
+        return millis;
+    }
+    @Override
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public TokenType type() {
+        return TokenType.BYTE_SIZE;
+    }
+
+    @Override
+    public JsonElement toJson() {
+        return new JsonPrimitive(millis);
     }
 }

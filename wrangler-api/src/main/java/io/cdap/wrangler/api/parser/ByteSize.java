@@ -1,24 +1,46 @@
 package io.cdap.wrangler.api.parser;
 
-public class ByteSize extends Token {
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonElement;
+
+/**
+ * Represents a byte size token such as "10KB".
+ */
+public class ByteSize implements Token {
+    private final String value;
     private final long bytes;
 
     public ByteSize(String value) {
-        super(value);
-        this.bytes = parseBytes(value);
+        this.value = value;
+        this.bytes = parse(value);
     }
 
-    private long parseBytes(String str) {
-        str = str.trim().toUpperCase();
-        double number = Double.parseDouble(str.replaceAll("[^0-9.]", ""));
-        if (str.endsWith("KB")) return (long)(number * 1024);
-        if (str.endsWith("MB")) return (long)(number * 1024 * 1024);
-        if (str.endsWith("GB")) return (long)(number * 1024 * 1024 * 1024);
-        if (str.endsWith("TB")) return (long)(number * 1024L * 1024 * 1024 * 1024);
-        return (long) number; // Bytes
+    private long parse(String input) {
+        input = input.trim().toUpperCase();
+        if (input.endsWith("KB")) return (long)(Double.parseDouble(input.replace("KB", "")) * 1024);
+        if (input.endsWith("MB")) return (long)(Double.parseDouble(input.replace("MB", "")) * 1024 * 1024);
+        if (input.endsWith("GB")) return (long)(Double.parseDouble(input.replace("GB", "")) * 1024 * 1024 * 1024);
+        if (input.endsWith("TB")) return (long)(Double.parseDouble(input.replace("TB", "")) * 1024L * 1024L * 1024L * 1024L);
+        if (input.endsWith("B")) return Long.parseLong(input.replace("B", ""));
+        throw new IllegalArgumentException("Invalid ByteSize: " + input);
     }
 
     public long getBytes() {
         return bytes;
+    }
+
+    @Override
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public TokenType type() {
+        return TokenType.BYTE_SIZE;
+    }
+
+    @Override
+    public JsonElement toJson() {
+        return new JsonPrimitive(bytes);
     }
 }
